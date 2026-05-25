@@ -6,7 +6,7 @@ Hands-on cybersecurity portfolio focused on SOC analysis, Linux security monitor
 
 # About Me
 
-Bachelor of Science in Information Science (degree conferral pending), University of Maryland, with an Associate of Applied Science in Computer Science from Montgomery College.
+Bachelor of Science in Information Science (degree conferral pending), University of Maryland (UMD), with an Associate of Applied Science in Computer Science from Montgomery College.
 
 Currently building practical blue team, SOC analyst, Linux security, and cloud security experience through hands-on cybersecurity projects involving:
 
