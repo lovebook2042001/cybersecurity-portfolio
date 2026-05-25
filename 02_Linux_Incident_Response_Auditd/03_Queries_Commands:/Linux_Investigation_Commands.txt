@@ -1,0 +1,77 @@
+############################################
+# Initial Environment Setup
+############################################
+
+# Navigating to the investigation scenario directory
+cd /home/ubuntu/scenario
+
+# Verifying available audit log files
+ls
+
+# Switching to root context for full audit log visibility
+sudo su
+
+# Confirming current user privileges
+whoami
+
+
+############################################
+# Reverse Shell Investigation
+############################################
+
+# Reviewing all socat-related process activity
+ausearch -i -if /home/ubuntu/scenario/audit.log | grep socat
+
+# Tracing parent process of reverse shell
+ausearch -i -if /home/ubuntu/scenario/audit.log --pid 2545
+
+# Moving up the process tree to identify command execution source
+ausearch -i -if /home/ubuntu/scenario/audit.log --pid 2543
+
+# Identifying the original application process responsible for activity
+ausearch -i -if /home/ubuntu/scenario/audit.log --pid 2526
+
+# Listing commands executed from the spawned reverse shell
+ausearch -i -if /home/ubuntu/scenario/audit.log --ppid 2545 | grep proctitle
+
+
+############################################
+# Privilege Escalation Investigation
+############################################
+
+# Looking for privilege escalation activity through su execution
+ausearch -i -if /home/ubuntu/scenario/audit.log -x su
+
+# Investigating commands executed after successful root escalation
+ausearch -i -if /home/ubuntu/scenario/audit.log --ppid 2554
+
+
+############################################
+# Persistence Investigation
+############################################
+
+# Detecting cron-based persistence activity
+ausearch -i -x crontab
+
+# Detecting SSH key persistence activity
+ausearch -i -f /.ssh/authorized_keys
+
+# Detecting systemd service persistence modifications
+ausearch -i -f /etc/systemd
+
+# Investigating suspicious system service creation
+ausearch -i -f /etc/systemd/system/tux.service
+
+
+############################################
+# Advanced Threat Hunting and Correlation
+############################################
+
+# Searching for all executed shell commands in the audit logs
+ausearch -i -if /home/ubuntu/scenario/audit.log | grep "/bin/sh"
+
+# Reviewing all commands executed with elevated root privileges
+ausearch -i -if /home/ubuntu/scenario/audit.log | grep "euid=root"
+
+# Reviewing suspicious outbound network-related activity
+ausearch -i -if /home/ubuntu/scenario/audit.log | grep "TCP"

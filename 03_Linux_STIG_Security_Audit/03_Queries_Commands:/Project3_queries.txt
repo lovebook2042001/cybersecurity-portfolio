@@ -1,0 +1,70 @@
+# Step 1 — Collect baseline Linux system information
+whoami
+hostname
+uname -a
+pwd
+ip addr
+
+# Step 2 — Review active running processes
+ps aux
+
+# Step 3 — Review enabled system services
+systemctl list-units --type=service
+
+# Step 4 — Review SSH daemon configuration
+cat /etc/ssh/sshd_config | grep -v "^#" | grep -v "^$"
+
+# Step 5 — Review local user accounts
+cat /etc/passwd | grep "/bin/bash"
+
+# Review sudo group membership
+getent group sudo
+
+# Step 6 — Review scheduled cron jobs
+crontab -l
+
+# Review system cron directories
+ls -la /etc/cron*
+
+# Step 7 — Review authentication logs
+ls -l /var/log/auth.log*
+
+# Review system logs
+ls -l /var/log/syslog*
+
+# Review Apache access logs
+ls -l /var/log/apache2
+
+# Step 8 — Review sensitive file permissions
+ls -l /etc/passwd /etc/shadow
+
+# Review SSH configuration permissions
+ls -l /etc/ssh/sshd_config
+
+# Step 9 — Review listening network services
+ss -tulnp
+
+# Step 10 — Review installed security-related packages
+dpkg -l | grep -E "ssh|audit|ufw|apparmor"
+
+# Step 11 — Attempt firewall status review (least privilege validation)
+sudo ufw status verbose
+
+# Step 12 — Review world-writable files
+find /home -type f -perm -002 2>/dev/null
+
+# Step 13 — Review password policy configuration
+cat /etc/login.defs | grep PASS
+
+# Step 14 — Review mounted file systems
+df -h
+
+# Step 15 — Review OS and kernel information
+cat /etc/os-release
+uname -r
+
+# Step 16 — Review login history
+last
+
+# Step 17 — Review firewall kernel modules
+lsmod | grep -E "ip_tables|nf_conntrack|x_tables"

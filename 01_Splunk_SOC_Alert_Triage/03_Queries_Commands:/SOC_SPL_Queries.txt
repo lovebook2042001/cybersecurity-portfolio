@@ -1,0 +1,209 @@
+SOC SPL Query Collection
+SOC Alert Triage & Investigation Dashboard Project
+Splunk Enterprise SIEM Monitoring
+
+Overview:
+This document contains the Splunk Processing Language (SPL) queries used during the SOC Alert Triage and Investigation Dashboard project. The queries were developed to support authentication monitoring, brute-force detection, suspicious web request analysis, persistence investigation, automated scanner detection, and threat severity classification within a simulated SOC investigation environment.
+
+Skills Demonstrated:
+• SPL Query Development
+• SIEM Dashboard Creation
+• Authentication Monitoring
+• Threat Hunting
+• Log Correlation
+• Web Request Analysis
+• Persistence Detection
+• Incident Triage
+• Threat Severity Classification
+• Security Monitoring
+
+====================================================================
+1. Top Attacker IPs
+====================================================================
+
+Purpose:
+Identify source IP addresses responsible for generating the highest number of failed SSH authentication attempts.
+
+SPL Query:
+
+index=* "Failed password"
+| stats count by src_ip
+| sort - count
+
+Detection Value:
+This query helps SOC analysts quickly identify high-volume attacker systems potentially involved in brute-force or credential stuffing attacks targeting SSH services.
+
+====================================================================
+2. Failed Login Attempts Over Time
+====================================================================
+
+Purpose:
+Visualize failed SSH login activity across the investigation timeframe to identify spikes and repeated attack patterns.
+
+SPL Query:
+
+index=* "Failed password"
+| timechart count
+
+Detection Value:
+Time-based analysis helps identify automated attack behavior, brute-force activity, and recurring authentication anomalies occurring within short intervals.
+
+====================================================================
+3. Top Targeted Usernames
+====================================================================
+
+Purpose:
+Identify which user accounts were most frequently targeted during failed SSH authentication attempts.
+
+SPL Query:
+
+index=* "Failed password"
+| stats count by user
+| sort - count
+
+Detection Value:
+This query highlights potentially high-value user accounts that may require additional protection measures such as MFA enforcement, password resets, or account monitoring.
+
+====================================================================
+4. Successful SSH Logins
+====================================================================
+
+Purpose:
+Monitor successful SSH authentication events and identify successful access attempts following repeated failed logins.
+
+SPL Query:
+
+index=* "Accepted password"
+| stats count by src_ip user
+| sort - count
+
+Detection Value:
+Successful authentication events originating from suspicious IP addresses may indicate compromised accounts or successful brute-force attacks.
+
+====================================================================
+5. Potential Brute Force Compromise
+====================================================================
+
+Purpose:
+Correlate failed and successful authentication activity to identify possible brute-force compromise scenarios.
+
+SPL Query:
+
+index=* ("Failed password" OR "Accepted password")
+| eval result=case(
+    like(_raw,"%Failed password%"),"failed",
+    like(_raw,"%Accepted password%"),"success"
+)
+| stats count(eval(result="failed")) as failed_count
+        count(eval(result="success")) as success_count
+        by src_ip user
+| where failed_count > 50 AND success_count > 0
+| sort - failed_count
+
+Detection Value:
+This correlation query identifies cases where a source IP generated a high number of failed login attempts before eventually recording successful authentication activity.
+
+====================================================================
+6. Suspicious Web Requests
+====================================================================
+
+Purpose:
+Detect suspicious HTTP requests targeting administrative paths, login portals, and potentially malicious PHP resources.
+
+SPL Query:
+
+index=* ("wp-login" OR "wp-admin" OR "upl.php" OR "1.php" OR "password.php")
+| table _time src_ip uri_path status host
+| sort - _time
+
+Detection Value:
+This query helps identify web reconnaissance, exploitation attempts, suspicious WordPress activity, and potentially malicious web requests targeting vulnerable services.
+
+====================================================================
+7. Top Requested Web Paths
+====================================================================
+
+Purpose:
+Analyze the most frequently requested URI paths observed during web traffic investigation.
+
+SPL Query:
+
+index=* uri_path=*
+| stats count by uri_path
+| sort - count
+
+Detection Value:
+Frequently requested administrative paths or login endpoints may indicate automated scanning activity, enumeration attempts, or brute-force attacks against web applications.
+
+====================================================================
+8. HTTP Status Code Distribution
+====================================================================
+
+Purpose:
+Monitor HTTP response status codes generated during suspicious web activity investigations.
+
+SPL Query:
+
+index=* status=*
+| stats count by status
+
+Detection Value:
+This query helps analysts identify successful requests, failed requests, redirects, and abnormal web behavior commonly associated with reconnaissance or vulnerability scanning activity.
+
+====================================================================
+9. Scanner and Automated Tool Detection
+====================================================================
+
+Purpose:
+Identify requests generated by automated reconnaissance tools and scripted HTTP clients.
+
+SPL Query:
+
+index=* ("python-requests" OR "curl")
+| table _time src_ip _raw
+| sort - _time
+
+Detection Value:
+The use of tools such as curl and python-requests commonly indicates automated scanning, scripted attacks, or reconnaissance behavior rather than normal user browsing activity.
+
+====================================================================
+10. Potential Persistence Activity
+====================================================================
+
+Purpose:
+Detect persistence-related behavior and suspicious system modification activity within monitored environments.
+
+SPL Query:
+
+index=* ("useradd" OR "cron" OR "File creation time changed")
+| table _time _raw
+| sort - _time
+
+Detection Value:
+This query identifies suspicious account creation events, cron-related activity, and Sysmon timestamp modification behavior that may indicate attacker persistence techniques or post-compromise activity.
+
+====================================================================
+11. Threat Severity Overview
+====================================================================
+
+Purpose:
+Categorize authentication-related events into severity levels to improve SOC alert prioritization and investigation workflows.
+
+SPL Query:
+
+index=* ("Failed password" OR "Accepted password")
+| eval severity=case(
+    like(_raw,"%Accepted password%"),"High",
+    like(_raw,"%Failed password%"),"Medium",
+    true(),"Low"
+)
+| stats count by severity
+
+Detection Value:
+Threat severity classification helps SOC analysts prioritize high-risk events and focus incident response efforts on activities with the greatest potential impact to the environment.
+
+====================================================================
+Conclusion
+====================================================================
+
+The SPL queries developed during this project demonstrate practical SOC investigation workflows using Splunk Enterprise SIEM. By combining authentication monitoring, web request analysis, persistence detection, and threat correlation techniques, the dashboard provides centralized visibility into suspicious activity and supports proactive cybersecurity monitoring and incident investigation processes.
